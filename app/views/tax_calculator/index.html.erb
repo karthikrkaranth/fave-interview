@@ -1,0 +1,78 @@
+<h1 class="text-center mb-4">Tax Calculator</h1>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <a href="<%= download_excel_path %>">Download Excel</a>
+
+
+    <%= form_tag '/generate_monthly_payslip', method: :post, class: 'card p-3', id: 'tax-calculator-form' do %>
+      <div class="form-group mb-3">
+        <%= label_tag :employee_name, 'Name', class: 'form-label' %>
+        <%= text_field_tag :employee_name, nil, class: 'form-control', placeholder: 'Enter name' %>
+        <span class="error-msg"></span>
+      </div>
+
+      <div class="form-group mb-3">
+        <%= label_tag :annual_salary, 'Salary', class: 'form-label' %>
+        <%= text_field_tag :annual_salary, nil, class: 'form-control', placeholder: 'Enter salary' %>
+        <span class="error-msg"></span>
+      </div>
+
+      <%= submit_tag 'Calculate Tax', class: 'btn btn-primary btn-sm' %>
+
+  <% end %>
+
+    <div id="result"></div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#tax-calculator-form").validate({
+            rules: {
+                "employee_name": {
+                    required: true
+                },
+                "annual_salary": {
+                    required: true,
+                    number: true,
+                    min: 1
+                }
+            },
+            messages: {
+                "employee_name": {
+                    required: "Please enter name"
+                },
+                "annual_salary": {
+                    required: "Please enter your salary",
+                    number: "Please enter a valid number",
+                    min: "Please enter a value greater than or equal to 0"
+                }
+            }
+        });
+    });
+
+    $(document).on('submit', '#tax-calculator-form', function(event) {
+        event.preventDefault();
+        var form = $(this);
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                // Update the HTML content with the response data
+                $('#result').html(
+                    'Name: ' + response.employee_name + '<br>' +
+                    'Gross Monthly Income: ' + response.gross_monthly_income + '<br>' +
+                    'Monthly Income Tax: ' + response.monthly_income_tax + '<br>' +
+                    'Net Monthly Income: ' + response.net_monthly_income
+                );
+            },
+            error: function(response) {
+                // Handle errors here
+            }
+        });
+    });
+</script>
+
