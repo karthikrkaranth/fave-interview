@@ -1,7 +1,7 @@
 require 'axlsx'
 
 class TaxCalculatorController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:generate_monthly_payslip]
+  skip_before_action :verify_authenticity_token, only: [:generate_monthly_payslip, :get_salary_info]
 
   def index
     # Render the tax calculator form
@@ -47,25 +47,40 @@ class TaxCalculatorController < ApplicationController
      return data
   end
 
-  def download_excel
-    # Fetch data from the database
-    @users = TaxCalculator.all
-
-    # Create a new Excel workbook
-    workbook = Axlsx::Package.new
-    workbook.workbook.add_worksheet(name: "Users") do |sheet|
-      # Add a header row
-      sheet.add_row ["Name", "Annual Salary", "Monthly Income tax", "Created At"]
-      # Add data for each user
-      @users.each do |user|
-        sheet.add_row [user.employee_name, user.annual_salary, user.monthly_income_tax, user.created_at]
+  def export_csv
+    tax_calculators = TaxCalculator.select(:created_at, :employee_name, :annual_salary, :monthly_income_tax)
+    salary_computations = tax_calculators.map do |tc|
+      {
+        time_stamp: tc.created_at.to_s,
+        employee_name: tc.employee_name,
+        annual_salary: tc.annual_salary.to_s,
+        monthly_income_tax: tc.monthly_income_tax.to_s
+      }
+    end
+    package = Axlsx::Package.new
+    workbook = package.workbook
+    workbook.add_worksheet(name: "Salary Computations") do |sheet|
+      sheet.add_row ["Created At", "Employee Name", "Annual Salary", "Monthly Income Tax"]
+      salary_computations.each do |sc|
+        sheet.add_row [sc[:time_stamp], sc[:employee_name], sc[:annual_salary], sc[:monthly_income_tax]]
       end
     end
 
-    # Set the filename for the downloaded file
-    filename = "users-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+    filename = "salary_computations_#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}.csv"
+    send_data package.to_stream.read, filename: filename
 
-    # Send the file to the user as an attachment
-    send_data workbook.to_stream.read, filename: filename, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  end
+
+  def get_salary_info
+    tax_calculators = TaxCalculator.select(:created_at, :employee_name, :annual_salary, :monthly_income_tax)
+    salary_computations = tax_calculators.map do |tc|
+      {
+        time_stamp: tc.created_at.to_s,
+        employee_name: tc.employee_name,
+        annual_salary: tc.annual_salary.to_s,
+        monthly_income_tax: tc.monthly_income_tax.to_s
+      }
+    end
+    render json: { salary_computations: salary_computations }
   end
 end

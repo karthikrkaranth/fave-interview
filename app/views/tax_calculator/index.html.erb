@@ -2,8 +2,8 @@
 
 <div class="row justify-content-center">
   <div class="col-md-6">
-    <a href="<%= download_excel_path %>">Download Excel</a>
-
+    <a href="<%= export_csv_path %>">Download Excel</a>
+    <br/>
 
     <%= form_tag '/generate_monthly_payslip', method: :post, class: 'card p-3', id: 'tax-calculator-form' do %>
       <div class="form-group mb-3">
@@ -48,13 +48,19 @@
                     number: "Please enter a valid number",
                     min: "Please enter a value greater than or equal to 0"
                 }
-            }
+            },
+            errorClass: 'is-invalid'
         });
     });
 
     $(document).on('submit', '#tax-calculator-form', function(event) {
         event.preventDefault();
         var form = $(this);
+        var submitBtn = form.find('input[type="submit"]');
+
+        // Disable the submit button to prevent multiple submissions
+        submitBtn.prop('disabled', true);
+
         $.ajax({
             url: form.attr('action'),
             type: 'POST',
@@ -68,11 +74,19 @@
                     'Monthly Income Tax: ' + response.monthly_income_tax + '<br>' +
                     'Net Monthly Income: ' + response.net_monthly_income
                 );
+
+                // Reset the form fields
+                form[0].reset();
+
+                // Re-enable the submit button
+                submitBtn.prop('disabled', false);
             },
             error: function(response) {
-                // Handle errors here
+                // Re-enable the submit button
+                submitBtn.prop('disabled', false);
             }
         });
     });
+
 </script>
 

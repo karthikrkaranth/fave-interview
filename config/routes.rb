@@ -1,13 +1,9 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Defines the root path route ("/")
-  # root "articles#index"
-  # Route for tax calculator form
   get '/', to: 'tax_calculator#index'
 
   # Route for tax calculation
   post '/generate_monthly_payslip', to: 'tax_calculator#generate_monthly_payslip'
-  get 'download_excel', to: 'tax_calculator#download_excel', defaults: { format: :xlsx }
+  get 'export_csv', to: 'tax_calculator#export_csv', defaults: { format: :csv }
+  get '/get_salary_info', to: 'tax_calculator#get_salary_info'
 
 end
